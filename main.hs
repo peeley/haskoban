@@ -1,5 +1,8 @@
+module Haskoban where
 import Data.List
 import System.IO
+import System.Directory
+import System.Random
 
 type Coords = (Int, Int)
 data Input = MoveUp | MoveDown | MoveLeft | MoveRight deriving Show
@@ -10,7 +13,7 @@ data World = World {
                 blocks :: [Coords],
                 holes :: [Coords],
                 player :: Coords
-                } deriving Show
+                }
 
 instance Semigroup World where
     w1 <> w2 = World { width = width w1,
@@ -36,11 +39,11 @@ gameLoop :: World -> IO ()
 gameLoop world = do
     putStrLn ""
     if isFinished world then
-        putStrLn "You won!"
+        putStrLn "Congratulations, You Won!"
     else do
-        putStr $ showWorld world
-        userInput <- getInput
         putStr "\ESC[2J"
+        putStrLn $ showWorld world
+        userInput <- getInput
         if isValidInput world userInput then do
             let movedWorld = movePlayer world userInput
             if playerIsPushing movedWorld then do
@@ -56,11 +59,13 @@ gameLoop world = do
         else do
             gameLoop world
 
+-- Specified block can be pushed if it is not moving into wall or other block.
 canPushBlock :: Coords -> Input -> World -> Bool
 canPushBlock block input world = not (movedBlock `elem` (walls world) 
                                  || movedBlock `elem` (blocks world))
                                     where movedBlock = updateCoords block input
 
+-- Updates world's holes record by removing overlapping blocks/holes
 fillHoles :: World -> World
 fillHoles world = world { holes = remainingHoles, blocks = remainingBlocks }
     where 
@@ -77,32 +82,39 @@ pushBlock world block input = world { blocks = pushedBlocks }
     where
         pushedBlocks = updateCoords block input : filter (/= block) (blocks world)
 
+-- Updates world by moving player
 movePlayer :: World -> Input -> World
 movePlayer world input = world { player = updateCoords (player world) input}
 
+-- Updates coordinates according to move direction
 updateCoords :: Coords -> Input -> Coords
 updateCoords (x, y) MoveUp = (x, y-1)
 updateCoords (x, y) MoveDown = (x, y+1)
 updateCoords (x, y) MoveLeft = (x-1, y)
 updateCoords (x, y) MoveRight = (x+1, y)
 
+-- Game is over when no more holes need to be filled.
 isFinished :: World -> Bool
-isFinished world = length (blocks world) == 0 && length (holes world) == 0
+isFinished world = length (blocks world) == 0
 
+-- If the player is moving inside bounds and not overlapping input is valid
 isValidInput :: World -> Input -> Bool
 isValidInput world input = insideBounds world input && isNotOverlapping world input
 
+-- Player is not overlapping if not moving into walls or stuck boulders
 isNotOverlapping :: World -> Input -> Bool
 isNotOverlapping world input =  not (proposedPlayer `elem` walls world ||
                                 proposedPlayer `elem` holes world)
                                 where proposedPlayer = updateCoords (player world) input
 
+-- Checks if player is within height/width of world
 insideBounds :: World -> Input -> Bool
 insideBounds world MoveRight = fst (player world) < (width world)
 insideBounds world MoveLeft = fst (player world) > 0
 insideBounds world MoveUp =  snd (player world) > 0
 insideBounds world moveDown = snd (player world) < (height world)
 
+-- Player can move up/left/right/down
 getInput :: IO Input
 getInput = do
     input <- getChar
@@ -113,33 +125,40 @@ getInput = do
         'd' -> return MoveRight
         otherwise -> getInput
 
-loadWorld :: String -> IO World
+loadWorld :: FilePath -> IO World
 loadWorld fileName = do
     fileHandle <- openFile fileName ReadMode
     fileContents <- hGetContents fileHandle
     let (width:height:level) = lines fileContents
     let defaultWorld = World (read width) (read height) [] [] [] (-1,-1)
-    return $ loadLevelRows defaultWorld 0 level
+    return $ loadRows defaultWorld 0 level
 
-loadLevelRows :: World -> Int -> [String] -> World
-loadLevelRows world _ [] = world
-loadLevelRows world n (x:xs) = (loadLevelString world (0,n) x) <> loadLevelRows world (n+1) xs
+loadRows :: World -> Int -> [String] -> World
+loadRows world _ [] = world
+loadRows world n (x:xs) = (loadTiles world (0,n) x) <> loadRows world (n+1) xs
 
-loadLevelString :: World -> Coords -> String -> World
-loadLevelString world _ [] = world
-loadLevelString world (x,y) (char:left) = addCharToWorld world (x,y) char <> 
-                                    loadLevelString world (x+1,y) left
+loadTiles :: World -> Coords -> String -> World
+loadTiles world _ [] = world
+loadTiles world (x,y) (char:left) = addTile world (x,y) char <> 
+                                    loadTiles world (x+1,y) left
 
-addCharToWorld :: World -> Coords -> Char -> World
-addCharToWorld world index char
+addTile :: World -> Coords -> Char -> World
+addTile world index char
     | char == '#' = world { walls = index : (walls world)}
     | char == 'v' = world { holes = index : (holes world)}
     | char == 'o' = world { blocks = index : (blocks world)}
     | char == '@' = world { player = index}
     | otherwise = world
+
+pickRandomLevel :: IO FilePath
+pickRandomLevel = do
+    localLevelFiles <- filter (\ x -> x /= "." && x /= "..") <$> getDirectoryContents "levels"
+    randomIndex <- randomRIO (0, (length localLevelFiles)-1)
+    return $ localLevelFiles!!randomIndex
         
 main :: IO ()
 main = do
-    world <- loadWorld "level1.txt"
+    levelFileName <- ("levels/" ++) <$> pickRandomLevel
+    world <- loadWorld levelFileName
     gameLoop world
         
