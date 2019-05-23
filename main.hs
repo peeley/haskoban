@@ -13,7 +13,7 @@ data World = World {
                 blocks :: [Coords],
                 holes :: [Coords],
                 player :: Coords
-                }
+                } deriving Show
 
 -- Allows for updating of World state
 instance Semigroup World where
@@ -39,16 +39,16 @@ showWorld world = concat [tile x y world ++ (if x == (width world) then "\n" els
                                     | (x,y) `elem` walls world = "#"
                                     | (x,y) `elem` blocks world = "o"
                                     | (x,y) `elem` holes world = "v"
-                                    | otherwise = "."
+                                    | otherwise = " "
 
 gameLoop :: World -> IO ()
 gameLoop world = do
     putStrLn ""
+    putStr "\ESC[2J"
+    putStrLn $ showWorld world
     if isFinished world then
         putStrLn "Congratulations, You Won!"
     else do
-        putStr "\ESC[2J"
-        putStrLn $ showWorld world
         userInput <- getInput
         if isValidInput world userInput then do
             let movedWorld = movePlayer world userInput
@@ -150,9 +150,9 @@ loadTiles world (x,y) (char:left) = addTile world (x,y) char <>
 
 addTile :: World -> Coords -> Char -> World
 addTile world index char
-    | char == '#' = world { walls = index : (walls world)}
-    | char == 'v' = world { holes = index : (holes world)}
-    | char == 'o' = world { blocks = index : (blocks world)}
+    | char == '|' || char == '-' = world { walls = index : (walls world)}
+    | char == '^' = world { holes = index : (holes world)}
+    | char == '0' = world { blocks = index : (blocks world)}
     | char == '@' = world { player = index}
     | otherwise = world
 
