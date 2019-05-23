@@ -12,7 +12,8 @@ data World = World {
                 walls :: [Coords],
                 blocks :: [Coords],
                 holes :: [Coords],
-                player :: Coords
+                player :: Coords,
+                moves :: Int
                 } deriving Show
 
 -- Allows for updating of World state
@@ -22,12 +23,13 @@ instance Semigroup World where
                        holes = (holes w1)++(holes w2),
                        walls = (walls w1)++(walls w2),
                        blocks = (blocks w1)++(blocks w2),
-                       player = if player w1 /= (-1,-1) then player w1 else player w2
+                       player = if player w1 /= (-1,-1) then player w1 else player w2,
+                       moves = moves w1
                        }
 
 -- Allows for empty world state before parsing level file
 instance Monoid World where
-    mempty = World (-1) (-1) [] [] [] (-1,-1)
+    mempty = World (-1) (-1) [] [] [] (-1,-1) 0
     a `mappend` b = a <> b
 
 showWorld :: World -> String
@@ -45,6 +47,8 @@ gameLoop :: World -> IO ()
 gameLoop world = do
     putStrLn ""
     putStr "\ESC[2J"
+    putStrLn $ "Buckets: " ++ (show . length . holes) world
+    putStrLn $ "Moves: " ++ (show . moves) world
     putStrLn $ showWorld world
     if isFinished world then
         putStrLn "Congratulations, You Won!"
@@ -84,13 +88,18 @@ playerIsPushing world = (player world) `elem` (blocks world)
 
 -- Pushes a block by updating list of block coordinates
 pushBlock ::  World -> Coords -> Input -> World
-pushBlock world block input = world { blocks = pushedBlocks }
+pushBlock world block input = world { 
+                                blocks = pushedBlocks
+                                }
     where
         pushedBlocks = updateCoords block input : filter (/= block) (blocks world)
 
 -- Updates world by moving player
 movePlayer :: World -> Input -> World
-movePlayer world input = world { player = updateCoords (player world) input}
+movePlayer world input = world { 
+                            player = updateCoords (player world) input,
+                            moves = (moves world) + 1
+                            }
 
 -- Updates coordinates according to move direction
 updateCoords :: Coords -> Input -> Coords
@@ -136,7 +145,7 @@ loadWorld fileName = do
     fileHandle <- openFile fileName ReadMode
     fileContents <- hGetContents fileHandle
     let (width:height:level) = lines fileContents
-    let defaultWorld = World (read width) (read height) [] [] [] (-1,-1)
+    let defaultWorld = World (read width) (read height) [] [] [] (-1,-1) 0
     return $ loadRows defaultWorld 0 level
 
 loadRows :: World -> Int -> [String] -> World
