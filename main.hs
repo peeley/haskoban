@@ -1,4 +1,4 @@
-module Haskoban where
+module Main where
 import Data.List
 import System.IO
 import System.Directory
@@ -15,14 +15,20 @@ data World = World {
                 player :: Coords
                 }
 
+-- Allows for updating of World state
 instance Semigroup World where
-    w1 <> w2 = World { width = width w1,
-                       height = height w1,
+    w1 <> w2 = World { width = if width w1 /= -1 then width w1 else width w2,
+                       height = if height w1 /= -1 then height w1 else height w2,
                        holes = (holes w1)++(holes w2),
                        walls = (walls w1)++(walls w2),
                        blocks = (blocks w1)++(blocks w2),
                        player = if player w1 /= (-1,-1) then player w1 else player w2
                        }
+
+-- Allows for empty world state before parsing level file
+instance Monoid World where
+    mempty = World (-1) (-1) [] [] [] (-1,-1)
+    a `mappend` b = a <> b
 
 showWorld :: World -> String
 showWorld world = concat [tile x y world ++ (if x == (width world) then "\n" else "")
@@ -95,7 +101,7 @@ updateCoords (x, y) MoveRight = (x+1, y)
 
 -- Game is over when no more holes need to be filled.
 isFinished :: World -> Bool
-isFinished world = length (blocks world) == 0
+isFinished world = length (holes world) == 0
 
 -- If the player is moving inside bounds and not overlapping input is valid
 isValidInput :: World -> Input -> Bool
