@@ -1,4 +1,11 @@
-module Main where
+{-# LANGUAGE OverloadedStrings #-}
+module Lib (
+        pickRandomLevel,
+        loadWorld,
+        gameLoop
+        )
+        where
+
 import Data.List
 import System.IO
 import System.Directory
@@ -170,10 +177,3 @@ pickRandomLevel = do
     localLevelFiles <- filter (\ x -> x /= "." && x /= "..") <$> getDirectoryContents "levels"
     randomIndex <- randomRIO (0, (length localLevelFiles)-1)
     return $ localLevelFiles!!randomIndex
-        
-main :: IO ()
-main = do
-    levelFileName <- ("levels/" ++) <$> pickRandomLevel
-    world <- loadWorld levelFileName
-    gameLoop world
-        
