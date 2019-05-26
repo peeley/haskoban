@@ -51,30 +51,23 @@ showWorld world = concat [tile x y world ++ (if x == (width world) then "\n" els
                                     | otherwise = " "
 
 gameLoop :: World -> IO ()
-gameLoop world = do
-    putStrLn ""
-    putStr "\ESC[2J"
-    putStrLn $ "Buckets: " ++ (show . length . holes) world
-    putStrLn $ "Moves: " ++ (show . moves) world
-    putStrLn $ showWorld world
+gameLoop world =
     if isFinished world then
-        putStrLn "Congratulations, You Won!"
+        putStrLn $ "\ESC[2J"++ (showWorld world) ++ "\n\nCONGRATULATIONS, You Won!"
     else do
-        userInput <- getInput
-        if isValidInput world userInput then do
-            let movedWorld = movePlayer world userInput
-            if playerIsPushing movedWorld then do
-                let pushedBlock = player movedWorld
-                if canPushBlock pushedBlock userInput movedWorld then do
-                    let pushedWorld = pushBlock movedWorld pushedBlock userInput
-                    let updatedWorld = fillHoles pushedWorld
-                    gameLoop updatedWorld
-                else
-                    gameLoop world
-            else
-                gameLoop movedWorld
-        else do
-            gameLoop world
+        putStrLn ""
+        putStr "\ESC[2J"
+        putStrLn $ "Buckets: " ++ (show . length . holes) world
+        putStrLn $ "Moves: " ++ (show . moves) world
+        putStrLn $ showWorld world
+        userInput <- getInput 
+        let newWorld = Just world >>= 
+                        (movePlayer userInput) >>= 
+                        (pushBlock userInput) >>= 
+                        fillHoles
+        case newWorld of
+            Just w -> gameLoop w
+            otherwise -> gameLoop world
 
 -- Specified block can be pushed if it is not moving into wall or other block.
 canPushBlock :: Coords -> Input -> World -> Bool
@@ -83,8 +76,8 @@ canPushBlock block input world = not (movedBlock `elem` (walls world)
                                     where movedBlock = updateCoords block input
 
 -- Updates world's holes record by removing overlapping blocks/holes
-fillHoles :: World -> World
-fillHoles world = world { holes = remainingHoles, blocks = remainingBlocks }
+fillHoles :: World -> Maybe World
+fillHoles world = Just world { holes = remainingHoles, blocks = remainingBlocks }
     where 
         remainingBlocks = [block | block <- blocks world, not (block `elem` holes world)]
         remainingHoles = [hole | hole <- holes world, not (hole `elem` blocks world)]
@@ -94,19 +87,29 @@ playerIsPushing :: World -> Bool
 playerIsPushing world = (player world) `elem` (blocks world)
 
 -- Pushes a block by updating list of block coordinates
-pushBlock ::  World -> Coords -> Input -> World
-pushBlock world block input = world { 
-                                blocks = pushedBlocks
+pushBlock :: Input -> World -> Maybe World
+pushBlock input world = if playerIsPushing world then 
+                            let block = player world 
+                                pushed = 
+                                    updateCoords block input : filter (/= block) (blocks world)
+                            in if canPushBlock block input world then 
+                                Just world { 
+                                blocks = pushed
                                 }
-    where
-        pushedBlocks = updateCoords block input : filter (/= block) (blocks world)
+                            else
+                                Nothing
+                      else
+                        Just world
 
 -- Updates world by moving player
-movePlayer :: World -> Input -> World
-movePlayer world input = world { 
+movePlayer :: Input -> World  -> Maybe World
+movePlayer input world = if isValidInput world input then
+                            Just $ world { 
                             player = updateCoords (player world) input,
                             moves = (moves world) + 1
                             }
+                        else
+                            Nothing
 
 -- Updates coordinates according to move direction
 updateCoords :: Coords -> Input -> Coords
