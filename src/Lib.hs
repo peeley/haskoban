@@ -61,13 +61,16 @@ gameLoop world =
         putStrLn $ "Moves: " ++ (show . moves) world
         putStrLn $ showWorld world
         userInput <- getInput 
-        let newWorld = Just world >>= 
-                        (movePlayer userInput) >>= 
-                        (pushBlock userInput) >>= 
-                        fillHoles
+        let newWorld = updateWorld userInput world
         case newWorld of
             Just w -> gameLoop w
             otherwise -> gameLoop world
+
+updateWorld :: Input -> World -> Maybe World
+updateWorld input world = Just world >>= 
+                        (movePlayer input) >>=
+                        (pushBlock input) >>=
+                        fillHoles
 
 -- Specified block can be pushed if it is not moving into wall or other block.
 canPushBlock :: Coords -> Input -> World -> Bool
