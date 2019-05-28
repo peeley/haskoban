@@ -10,6 +10,7 @@ import Data.List
 import System.IO
 import System.Directory
 import System.Random
+import System.Console.ANSI
 
 type Coords = (Int, Int)
 data Input = MoveUp | MoveDown | MoveLeft | MoveRight deriving Show
