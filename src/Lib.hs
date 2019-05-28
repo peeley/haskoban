@@ -53,11 +53,13 @@ showWorld world = concat [tile x y world ++ (if x == (width world) then "\n" els
 
 gameLoop :: World -> IO ()
 gameLoop world =
-    if isFinished world then
-        putStrLn $ "\ESC[2J"++ (showWorld world) ++ "\n\nCONGRATULATIONS, You Won!"
+    if isFinished world then do
+        clearScreen
+        setCursorPosition 0 0
+        putStrLn $ (showWorld world) ++ "\n\nCONGRATULATIONS, You Won!"
     else do
-        putStrLn ""
-        putStr "\ESC[2J"
+        clearScreen
+        setCursorPosition 0 0
         putStrLn $ "Buckets: " ++ (show . length . holes) world
         putStrLn $ "Moves: " ++ (show . moves) world
         putStrLn $ showWorld world
