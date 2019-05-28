@@ -56,7 +56,10 @@ gameLoop world =
     if isFinished world then do
         clearScreen
         setCursorPosition 0 0
-        putStrLn $ (showWorld world) ++ "\n\nCONGRATULATIONS, You Won!"
+        putStrLn $ showWorld world
+        setSGR [ SetConsoleIntensity BoldIntensity]
+        setSGR [ SetColor Foreground Vivid Green ]
+        putStrLn "\n\nCONGRATULATIONS, You Won!"
     else do
         clearScreen
         setCursorPosition 0 0
