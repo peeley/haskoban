@@ -35,11 +35,6 @@ instance Semigroup World where
                        moves = moves w1
                        }
 
--- Allows for empty world state before parsing level file
-instance Monoid World where
-    mempty = World (-1) (-1) [] [] [] (-1,-1) 0
-    a `mappend` b = a <> b
-
 -- Converts World value to String
 showWorld :: World -> String
 showWorld world = concat [tile x y world ++ (if x == (width world) then "\n" else "")
