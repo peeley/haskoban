@@ -40,6 +40,7 @@ instance Monoid World where
     mempty = World (-1) (-1) [] [] [] (-1,-1) 0
     a `mappend` b = a <> b
 
+-- Converts World value to String
 showWorld :: World -> String
 showWorld world = concat [tile x y world ++ (if x == (width world) then "\n" else "")
                           | y <- [0..height world], x <- [0..width world]]
@@ -51,12 +52,12 @@ showWorld world = concat [tile x y world ++ (if x == (width world) then "\n" els
                                     | (x,y) `elem` holes world = "v"
                                     | otherwise = " "
 
+-- Main game loop - updates game until 'finished' condition is met.
 gameLoop :: World -> IO ()
 gameLoop world =
     if isFinished world then do
         clearScreen
         setCursorPosition 0 0
-        putStrLn $ showWorld world
         setSGR [ SetConsoleIntensity BoldIntensity]
         setSGR [ SetColor Foreground Vivid Green ]
         putStrLn "\n\nCONGRATULATIONS, You Won!"
@@ -112,7 +113,7 @@ pushBlock input world = if playerIsPushing world then
 
 -- Updates world by moving player
 movePlayer :: Input -> World  -> Maybe World
-movePlayer input world = if isValidInput world input then
+movePlayer input world = if isNotOverlapping world input then
                             Just $ world { 
                             player = updateCoords (player world) input,
                             moves = (moves world) + 1
@@ -131,22 +132,11 @@ updateCoords (x, y) MoveRight = (x+1, y)
 isFinished :: World -> Bool
 isFinished world = length (holes world) == 0
 
--- If the player is moving inside bounds and not overlapping input is valid
-isValidInput :: World -> Input -> Bool
-isValidInput world input = insideBounds world input && isNotOverlapping world input
-
 -- Player is not overlapping if not moving into walls or stuck boulders
 isNotOverlapping :: World -> Input -> Bool
 isNotOverlapping world input =  not (proposedPlayer `elem` walls world ||
                                 proposedPlayer `elem` holes world)
                                 where proposedPlayer = updateCoords (player world) input
-
--- Checks if player is within height/width of world
-insideBounds :: World -> Input -> Bool
-insideBounds world MoveRight = fst (player world) < (width world)
-insideBounds world MoveLeft = fst (player world) > 0
-insideBounds world MoveUp =  snd (player world) > 0
-insideBounds world moveDown = snd (player world) < (height world)
 
 -- Player can move up/left/right/down
 getInput :: IO Input
@@ -159,6 +149,7 @@ getInput = do
         'd' -> return MoveRight
         otherwise -> getInput
 
+-- Loads file at filename into World value
 loadWorld :: FilePath -> IO World
 loadWorld fileName = do
     fileHandle <- openFile fileName ReadMode
@@ -167,6 +158,7 @@ loadWorld fileName = do
     let defaultWorld = World (read width) (read height) [] [] [] (-1,-1) 0
     return $ loadRows defaultWorld 0 level
 
+-- Loads each row tile by tile, until width is reached
 loadRows :: World -> Int -> [String] -> World
 loadRows world _ [] = world
 loadRows world n (x:xs) = (loadTiles world (0,n) x) <> loadRows world (n+1) xs
@@ -176,6 +168,8 @@ loadTiles world _ [] = world
 loadTiles world (x,y) (char:left) = addTile world (x,y) char <> 
                                     loadTiles world (x+1,y) left
 
+-- Adds character to world at current coords
+-- Currently parses Nethack tileset
 addTile :: World -> Coords -> Char -> World
 addTile world index char
     | char == '|' || char == '-' = world { walls = index : (walls world)}
@@ -184,6 +178,7 @@ addTile world index char
     | char == '@' = world { player = index}
     | otherwise = world
 
+-- Picks a random level file from the local levels/  directory
 pickRandomLevel :: IO FilePath
 pickRandomLevel = do
     localLevelFiles <- filter (\ x -> x /= "." && x /= "..") <$> getDirectoryContents "levels"

@@ -29,7 +29,7 @@ library:
   source-dirs: src
 
 executables:
-  haskoban-exe:
+  haskoban:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
