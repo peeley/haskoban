@@ -27,4 +27,10 @@ playLevel levelName = do
     gameLoop world
 
 helpMessage :: IO ()
-helpMessage = putStrLn "I've fallen and I can't get up!"
+helpMessage = do
+    putStrLn "usage: haskoban [option] [arg]"
+    putStrLn "Options: "
+    putStrLn "-h, --help:\tDisplay this message."
+    putStrLn "-l, --level [ARG]:\tPlay specific level, specified \
+             \ by filename in the levels file."
+
