@@ -156,21 +156,21 @@ loadWorld fileName = do
 -- Loads each row tile by tile, until width is reached
 loadRows :: World -> Int -> [String] -> World
 loadRows world _ [] = world
-loadRows world n (x:xs) = (loadTiles world (0,n) x) <> loadRows world (n+1) xs
+loadRows world n (x:xs) = (loadRow world (0,n) x) <> loadRows world (n+1) xs
 
-loadTiles :: World -> Coords -> String -> World
-loadTiles world _ [] = world
-loadTiles world (x,y) (char:left) = addTile world (x,y) char <> 
-                                    loadTiles world (x+1,y) left
+loadRow :: World -> Coords -> String -> World
+loadRow world _ [] = world
+loadRow world (x,y) (char:left) = addTile world (x,y) char <> 
+                                    loadRow world (x+1,y) left
 
 -- Adds character to world at current coords
 -- Currently parses Nethack tileset
 addTile :: World -> Coords -> Char -> World
-addTile world index char
-    | char == '|' || char == '-' = world { walls = index : (walls world)}
-    | char == '^' = world { holes = index : (holes world)}
-    | char == '0' = world { blocks = index : (blocks world)}
-    | char == '@' = world { player = index}
+addTile world coords char
+    | char == '|' || char == '-' = world { walls = coords : (walls world)}
+    | char == '^' = world { holes = coords : (holes world)}
+    | char == '0' = world { blocks = coords : (blocks world)}
+    | char == '@' = world { player = coords}
     | otherwise = world
 
 -- Picks a random level file from the local levels/  directory
