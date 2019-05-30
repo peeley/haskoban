@@ -178,6 +178,7 @@ addTile world coords char
 -- Picks a random level file from the local levels/  directory
 pickRandomLevel :: IO FilePath
 pickRandomLevel = do
-    localLevelFiles <- filter (\ x -> x /= "." && x /= "..") <$> getDirectoryContents "levels"
+    localLevelFiles <- filter (\ x -> x /= "." && x /= "..") <$> 
+                        getDirectoryContents "levels"
     randomIndex <- randomRIO (0, (length localLevelFiles)-1)
     return $ localLevelFiles!!randomIndex
