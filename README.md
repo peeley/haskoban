@@ -19,6 +19,30 @@ flag or run as root.
 Within the haskoban directory, simply run `haskoban` to start playing!
 
 ### How to Play
-As a warehouse keeper, your job is to organize the warehouse by  sliding crates into their respective slots
-in the warehouse. Control the your worker ('@') using WASD, and push boulders by walking into them while their 
-path is clear. The game is won when there are no slots remaining.
+As a warehouse keeper ('@'), your job is to organize the warehouse by sliding crates ('o') into their 
+respective slots ('v'). Move your character using WASD, and push boulders by walking 
+into them while their path is clear. The game is won when all the slots are filled.
+
+### Options & Custom Levels
+All levels are stored in plaintext in the `levels/` directory. Custom levels can be written in the following
+format:
+
+First line: Width of level in # tiles
+
+Second line: Height of level in # tiles
+
+Rest of file: level written out where each tile is represented as:
+
+'|' or '-' : wall
+
+'0' : crate
+
+'^' : slot
+
+'@' : player start position
+
+To play a specific level, pass the `--level` or `-l` with the desired level filename as its argument.
+
+Currently, the levels are largely borrowed from the ASCII roguelike [Nethack](https://www.nethack.org/),
+which features a number of Sokoban-style puzzle levels. Contributions of custom level designs are greatly welcomed,
+and level sharing features are planned for the future.
