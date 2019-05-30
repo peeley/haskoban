@@ -56,6 +56,8 @@ gameLoop world =
         setSGR [ SetConsoleIntensity BoldIntensity]
         setSGR [ SetColor Foreground Vivid Green ]
         putStrLn "\n\nCONGRATULATIONS, You Won!"
+        _ <- getLine
+        putStr ""
     else do
         clearScreen
         setCursorPosition 0 0
