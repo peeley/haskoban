@@ -26,23 +26,16 @@ into them while their path is clear. The game is won when all the slots are fill
 ### Options & Custom Levels
 All levels are stored in plaintext in the `levels/` directory. Custom levels can be written in the following
 format:
-
+```
 First line: Width of level in # tiles
-
 Second line: Height of level in # tiles
-
 Rest of file: level written out where each tile is represented as:
-
-'|' or '-' : wall
-
-'0' : crate
-
-'^' : slot
-
-'@' : player start position
-
+    '|' or '-' : wall
+    '0' : crate
+    '^' : slot
+    '@' : player start position
+```
 To play a specific level, pass the `--level` or `-l` with the desired level filename as its argument.
-
 Currently, the levels are largely borrowed from the ASCII roguelike [Nethack](https://www.nethack.org/),
 which features a number of Sokoban-style puzzle levels. Contributions of custom level designs are greatly welcomed,
 and level sharing features are planned for the future.
