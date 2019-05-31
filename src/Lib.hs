@@ -15,6 +15,7 @@ import System.Console.ANSI
 type Coords = (Int, Int)
 data Input = MoveUp | MoveDown | MoveLeft | MoveRight deriving Show
 data World = World {
+                name :: String,
                 width :: Int,
                 height :: Int,
                 walls :: [Coords],
@@ -26,13 +27,14 @@ data World = World {
 
 -- Allows for updating of World state
 instance Semigroup World where
-    w1 <> w2 = World { width = if width w1 /= -1 then width w1 else width w2,
-                       height = if height w1 /= -1 then height w1 else height w2,
+    w1 <> w2 = World { width = width w2,
+                       height = height w2,
                        holes = (holes w1)++(holes w2),
                        walls = (walls w1)++(walls w2),
                        blocks = (blocks w1)++(blocks w2),
                        player = if player w1 /= (-1,-1) then player w1 else player w2,
-                       moves = moves w1
+                       moves = moves w1,
+                       name = name w1
                        }
 
 -- Converts World value to String
@@ -61,7 +63,9 @@ gameLoop world =
     else do
         clearScreen
         setCursorPosition 0 0
-        putStrLn $ "Buckets: " ++ (show . length . holes) world
+        putStrLn $ "[" ++ name world ++ "]"
+        putStrLn $ "Slots: " ++ (show . length . holes) world
+        putStrLn $ "Crates: " ++ (show . length . blocks) world
         putStrLn $ "Moves: " ++ (show . moves) world
         putStrLn $ showWorld world
         userInput <- getInput 
@@ -152,7 +156,7 @@ loadWorld fileName = do
     fileHandle <- openFile fileName ReadMode
     fileContents <- hGetContents fileHandle
     let (width:height:level) = lines fileContents
-    let defaultWorld = World (read width) (read height) [] [] [] (-1,-1) 0
+    let defaultWorld = World fileName (read width) (read height) [] [] [] (-1,-1) 0
     return $ loadRows defaultWorld 0 level
 
 -- Loads each row tile by tile, until width is reached
@@ -178,7 +182,6 @@ addTile world coords char
 -- Picks a random level file from the local levels/  directory
 pickRandomLevel :: IO FilePath
 pickRandomLevel = do
-    localLevelFiles <- filter (\ x -> x /= "." && x /= "..") <$> 
-                        getDirectoryContents "levels"
+    localLevelFiles <- filter (\ x -> x /= "." && x /= "..") <$> getDirectoryContents "levels"
     randomIndex <- randomRIO (0, (length localLevelFiles)-1)
     return $ localLevelFiles!!randomIndex
