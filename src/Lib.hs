@@ -55,24 +55,31 @@ gameLoop world =
     if isFinished world then do
         clearScreen
         setCursorPosition 0 0
-        setSGR [ SetConsoleIntensity BoldIntensity]
-        setSGR [ SetColor Foreground Vivid Green ]
+        setTermColor Green
         putStrLn "\n\nCONGRATULATIONS, You Won!"
         _ <- getLine
         putStr ""
     else do
         clearScreen
         setCursorPosition 0 0
+        setTermColor Yellow
         putStrLn $ "[" ++ name world ++ "]"
+        setTermColor Blue
         putStrLn $ "Slots: " ++ (show . length . holes) world
         putStrLn $ "Crates: " ++ (show . length . blocks) world
-        putStrLn $ "Moves: " ++ (show . moves) world
+        putStrLn $ "Moves: " ++ (show . moves) world ++ "\n"
+        setTermColor White
         putStrLn $ showWorld world
         userInput <- getInput 
         let newWorld = updateWorld userInput world
         case newWorld of
             Just w -> gameLoop w
             otherwise -> gameLoop world
+
+setTermColor :: Color -> IO ()
+setTermColor color = do
+    setSGR [ SetConsoleIntensity NormalIntensity ]
+    setSGR [ SetColor Foreground Vivid color ]
 
 updateWorld :: Input -> World -> Maybe World
 updateWorld input world = Just world >>= 
