@@ -39,15 +39,15 @@ instance Semigroup World where
 
 -- Converts World value to String
 showWorld :: World -> String
-showWorld world = concat [tile x y world ++ (if x == (width world) then "\n" else "")
+showWorld world = concat [tile x y world : (if x == (width world) then "\n" else "")
                           | y <- [0..height world], x <- [0..width world]]
                             where 
                                 tile x y world 
-                                    | (x,y) == player world = "@"
-                                    | (x,y) `elem` walls world = "#"
-                                    | (x,y) `elem` blocks world = "o"
-                                    | (x,y) `elem` holes world = "v"
-                                    | otherwise = " "
+                                    | (x,y) == player world = '@'
+                                    | (x,y) `elem` walls world = '#'
+                                    | (x,y) `elem` blocks world = 'o'
+                                    | (x,y) `elem` holes world = 'v'
+                                    | otherwise = ' '
 
 -- Main game loop - updates game until 'finished' condition is met.
 gameLoop :: World -> IO ()
