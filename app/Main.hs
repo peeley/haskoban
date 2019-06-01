@@ -10,10 +10,13 @@ main = do
     hSetBuffering stdin NoBuffering
     args <- getArgs
     parseArgs args
-       
+      
+directory :: String
+directory = "~/.haskoban/levels"
+
 parseArgs :: [String] -> IO ()
 parseArgs [] = do
-    levelFileName <- ("levels/" ++) <$> pickRandomLevel
+    levelFileName <- ("levels/" ++) <$> pickRandomLevel directory
     world <- loadWorld levelFileName
     gameLoop world
 parseArgs ("-l" : levelName : _) = playLevel levelName
