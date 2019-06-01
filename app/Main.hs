@@ -4,6 +4,7 @@ module Main where
 import Lib
 import System.IO
 import System.Environment
+import System.Directory
 
 main :: IO ()
 main = do
@@ -11,22 +12,26 @@ main = do
     args <- getArgs
     parseArgs args
       
-directory :: String
-directory = "~/.haskoban/levels"
+getLevelDirectory :: IO FilePath
+getLevelDirectory = do
+    homeDirectory <- getHomeDirectory
+    let levelDirectory = homeDirectory ++ "/.haskoban/levels/"
+    return levelDirectory
 
 parseArgs :: [String] -> IO ()
 parseArgs [] = do
-    levelFileName <- ("levels/" ++) <$> pickRandomLevel directory
+    levelFileName <- getLevelDirectory >>= pickRandomLevel 
     world <- loadWorld levelFileName
     gameLoop world
 parseArgs ("-l" : levelName : _) = playLevel levelName
 parseArgs ("--level" : levelName : _) = playLevel levelName
 parseArgs _ = helpMessage
 
-playLevel :: String -> IO ()
+playLevel :: FilePath -> IO ()
 playLevel levelName = do
-    let levelFileName = ("levels/" ++) levelName
-    world <- loadWorld levelFileName
+    levelFolder <- getLevelDirectory
+    let levelFile = levelFolder ++ levelName
+    world <- loadWorld levelFile
     gameLoop world
 
 helpMessage :: IO ()

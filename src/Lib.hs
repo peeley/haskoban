@@ -86,4 +86,4 @@ pickRandomLevel :: FilePath -> IO FilePath
 pickRandomLevel baseDirectory = do
     localLevelFiles <- filter (\ x -> x /= "." && x /= "..") <$> getDirectoryContents baseDirectory
     randomIndex <- randomRIO (0, (length localLevelFiles)-1)
-    return $ localLevelFiles!!randomIndex
+    return $ baseDirectory ++ localLevelFiles!!randomIndex
