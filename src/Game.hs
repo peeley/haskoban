@@ -1,4 +1,7 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Game where
+
+import qualified Data.Text as T
 
 type Coords = (Int, Int)
 data Input = MoveUp | MoveDown | MoveLeft | MoveRight | Restart deriving Show
@@ -23,24 +26,28 @@ data GameState = GameState {
                     current :: World,
                     blank :: World,
                     retries :: Int,
-                    name :: String
+                    name :: T.Text
                     } deriving Show
 
 instance Semigroup GameState where
     g1 <> g2 = g1 { current = (current g1) <> (current g2) }
 
 -- Converts World value to String
-showWorld :: World -> String
-showWorld world = concat [tile x y world : (if x == (width world) then "\n" else "")
-                          | y <- [0..height world], x <- [0..width world]]
-                            where 
-                                tile x y world 
-                                    | (x,y) == player world = '@'
-                                    | (x,y) `elem` walls world = '#'
-                                    | (x,y) `elem` blocks world = 'o'
-                                    | (x,y) `elem` holes world = 'v'
-                                    | otherwise = ' '
+showWorld :: World -> T.Text
+showWorld world = foldl T.append "" [T.cons (tile x y world) (if x == (width world) then "\n" else "")
+                                      | y <- [0..height world], x <- [0..width world]]
+                                        where 
+                                            tile :: Int -> Int -> World -> Char
+                                            tile x y world 
+                                                | (x,y) == player world = '@'
+                                                | (x,y) `elem` walls world = '#'
+                                                | (x,y) `elem` blocks world = 'o'
+                                                | (x,y) `elem` holes world = 'v'
+                                                | otherwise = ' '
 
+-- Updates world based on user input
+-- If user input is valid, updated world is returned wrapped in Just
+-- If input is invalid, then Nothing is returned
 updateWorld :: Input -> World -> Maybe World
 updateWorld input world = Just world >>= 
                         (movePlayer input) >>=

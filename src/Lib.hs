@@ -7,6 +7,8 @@ import System.IO
 import System.Console.ANSI
 import System.Directory
 import System.Random
+import qualified Data.Text as T
+import qualified Data.Text.IO as TIO
 import Game
 
 -- Main game loop - updates game until 'finished' condition is met.
@@ -17,20 +19,20 @@ gameLoop state =
         clearScreen
         setCursorPosition 0 0
         setTermColor Green
-        putStrLn "\n\nCONGRATULATIONS, You Won!"
+        TIO.putStrLn "\n\nCONGRATULATIONS, You Won!"
         _ <- getLine
-        putStr ""
+        TIO.putStr ""
     else do
         clearScreen
         setCursorPosition 0 0
         setTermColor Yellow
-        putStrLn $ "[" ++ name state ++ "]"
+        TIO.putStrLn $ "[" <> name state <> "]"
         setTermColor Blue
-        putStrLn $ "Slots: " ++ (show . length . holes) world
-        putStrLn $ "Crates: " ++ (show . length . blocks) world
-        putStrLn $ "Retries: " ++ (show . retries) state ++ "\n"
+        TIO.putStrLn $ "Slots: " `T.append` (T.pack . show . length . holes) world
+        TIO.putStrLn $ "Crates: " `T.append` (T.pack . show . length . blocks) world
+        TIO.putStrLn $ "Retries: " `T.append` (T.pack . show . retries) state `T.append` "\n"
         setTermColor White
-        putStrLn $ showWorld world
+        TIO.putStrLn $ showWorld world
         userInput <- getInput 
         case userInput of
             Restart -> gameLoop $ state { current = blank state,
@@ -38,7 +40,7 @@ gameLoop state =
             otherwise -> let newWorld = updateWorld userInput world in
                             case newWorld of
                                 Just w -> gameLoop $ state { current = w }
-                                otherwise -> gameLoop state
+                                Nothing -> gameLoop state
 
 setTermColor :: Color -> IO ()
 setTermColor color = do
@@ -58,19 +60,19 @@ getInput = do
         'r' -> return Restart
         otherwise -> getInput
 
-loadState :: FilePath -> IO GameState
+loadState :: T.Text -> IO GameState
 loadState fileName = do
     world <- loadWorld fileName
-    let fileDisplayName = last $ splitOn "/" fileName
+    let fileDisplayName = T.pack . last . splitOn "/" $ T.unpack fileName
     return $ GameState { current = world,
                          blank = world,
                          retries = 0,
                          name = fileDisplayName }
 
 -- Loads file at filename into World value
-loadWorld :: FilePath -> IO World
+loadWorld :: T.Text -> IO World
 loadWorld fileName = do
-    fileHandle <- openFile fileName ReadMode
+    fileHandle <- openFile (T.unpack fileName) ReadMode
     fileContents <- hGetContents fileHandle
     let (width:height:level) = lines fileContents
     let defaultWorld = World (read width) (read height) [] [] [] (-1,-1)
@@ -97,8 +99,8 @@ addTile world coords char
     | otherwise = world
 
 -- Picks a random level file from the local levels/  directory
-pickRandomLevel :: FilePath -> IO FilePath
+pickRandomLevel :: T.Text -> IO T.Text
 pickRandomLevel baseDirectory = do
-    localLevelFiles <- filter (\ x -> x /= "." && x /= "..") <$> getDirectoryContents baseDirectory
+    localLevelFiles <- filter (\ x -> x /= "." && x /= "..") <$> (getDirectoryContents . T.unpack) baseDirectory
     randomIndex <- randomRIO (0, (length localLevelFiles)-1)
-    return $ baseDirectory ++ localLevelFiles!!randomIndex
+    return $ baseDirectory <> (T.pack $ localLevelFiles!!randomIndex)

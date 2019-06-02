@@ -3,6 +3,8 @@ module Main where
 
 import Lib
 import System.IO
+import qualified Data.Text as T
+import qualified Data.Text.IO as TIO
 import System.Environment
 import System.Directory
 
@@ -10,15 +12,16 @@ main :: IO ()
 main = do
     hSetBuffering stdin NoBuffering
     args <- getArgs
-    parseArgs args
+    let tArgs = map T.pack args
+    parseArgs tArgs
       
-getLevelDirectory :: IO FilePath
+getLevelDirectory :: IO T.Text
 getLevelDirectory = do
-    homeDirectory <- getHomeDirectory
-    let levelDirectory = homeDirectory ++ "/.haskoban/levels/"
+    homeDirectory <- T.pack <$> getHomeDirectory
+    let levelDirectory = homeDirectory <> "/.haskoban/levels/"
     return levelDirectory
 
-parseArgs :: [String] -> IO ()
+parseArgs :: [T.Text] -> IO ()
 parseArgs [] = do
     levelFile <- getLevelDirectory >>= pickRandomLevel 
     state <- loadState levelFile
@@ -27,18 +30,18 @@ parseArgs ("-l" : levelName : _) = playLevel levelName
 parseArgs ("--level" : levelName : _) = playLevel levelName
 parseArgs _ = helpMessage
 
-playLevel :: FilePath -> IO ()
+playLevel :: T.Text -> IO ()
 playLevel levelName = do
     levelFolder <- getLevelDirectory
-    let levelFile = levelFolder ++ levelName
+    let levelFile = levelFolder <> levelName
     state <- loadState levelFile
     gameLoop state
 
 helpMessage :: IO ()
 helpMessage = do
-    putStrLn "usage: haskoban [option] [arg]"
-    putStrLn "Options: "
-    putStrLn "-h, --help:\tDisplay this message."
-    putStrLn "-l, --level [ARG]:\tPlay specific level, specified \
+    TIO.putStrLn "usage: haskoban [option] [arg]"
+    TIO.putStrLn "Options: "
+    TIO.putStrLn "-h, --help:\tDisplay this message."
+    TIO.putStrLn "-l, --level [ARG]:\tPlay specific level, specified \
              \ by filename in the levels file."
 
