@@ -25,6 +25,7 @@ dependencies:
 - random
 - ansi-terminal
 - text
+- split
 
 library:
   source-dirs: src

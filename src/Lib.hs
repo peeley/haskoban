@@ -2,6 +2,7 @@
 module Lib where
 
 import Data.List
+import Data.List.Split
 import System.IO
 import System.Console.ANSI
 import System.Directory
@@ -57,8 +58,9 @@ loadWorld :: FilePath -> IO World
 loadWorld fileName = do
     fileHandle <- openFile fileName ReadMode
     fileContents <- hGetContents fileHandle
+    let fileDisplayName = last $ splitOn "/" fileName
     let (width:height:level) = lines fileContents
-    let defaultWorld = World fileName (read width) (read height) [] [] [] (-1,-1) 0
+    let defaultWorld = World fileDisplayName (read width) (read height) [] [] [] (-1,-1) 0
     return $ loadRows defaultWorld 0 level
 
 -- Loads each row tile by tile, until width is reached
