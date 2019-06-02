@@ -23,11 +23,11 @@ gameLoop world =
         clearScreen
         setCursorPosition 0 0
         setTermColor Yellow
-        putStrLn $ "[" ++ name world ++ "]"
+        -- putStrLn $ "[" ++ name world ++ "]"
         setTermColor Blue
         putStrLn $ "Slots: " ++ (show . length . holes) world
         putStrLn $ "Crates: " ++ (show . length . blocks) world
-        putStrLn $ "Moves: " ++ (show . moves) world ++ "\n"
+        --putStrLn $ "Moves: " ++ (show . moves) world ++ "\n"
         setTermColor White
         putStrLn $ showWorld world
         userInput <- getInput 
@@ -60,7 +60,7 @@ loadWorld fileName = do
     fileContents <- hGetContents fileHandle
     let fileDisplayName = last $ splitOn "/" fileName
     let (width:height:level) = lines fileContents
-    let defaultWorld = World fileDisplayName (read width) (read height) [] [] [] (-1,-1) 0
+    let defaultWorld = World (read width) (read height) [] [] [] (-1,-1)
     return $ loadRows defaultWorld 0 level
 
 -- Loads each row tile by tile, until width is reached

@@ -3,27 +3,31 @@ module Game where
 type Coords = (Int, Int)
 data Input = MoveUp | MoveDown | MoveLeft | MoveRight deriving Show
 data World = World {
-                name :: String,
                 width :: Int,
                 height :: Int,
                 walls :: [Coords],
                 blocks :: [Coords],
                 holes :: [Coords],
-                player :: Coords,
-                moves :: Int
+                player :: Coords
                 } deriving Show
 
 -- Allows for updating of World state
 instance Semigroup World where
-    w1 <> w2 = World { width = width w2,
-                       height = height w2,
-                       holes = (holes w1)++(holes w2),
-                       walls = (walls w1)++(walls w2),
-                       blocks = (blocks w1)++(blocks w2),
-                       player = if player w1 /= (-1,-1) then player w1 else player w2,
-                       moves = moves w1,
-                       name = name w1
-                       }
+    w1 <> w2 = w2 { holes = (holes w1)++(holes w2),
+                    walls = (walls w1)++(walls w2),
+                    blocks = (blocks w1)++(blocks w2),
+                    player = if player w1 /= (-1,-1) then player w1 else player w2
+                    }
+
+data GameState = GameState {
+                    current :: World,
+                    blank :: World,
+                    retries :: Int,
+                    name :: String
+                    } deriving Show
+
+instance Semigroup GameState where
+    g1 <> g2 = g1 { current = (current g1) <> (current g2) }
 
 -- Converts World value to String
 showWorld :: World -> String
@@ -79,8 +83,8 @@ pushBlock input world = if playerIsPushing world then
 movePlayer :: Input -> World  -> Maybe World
 movePlayer input world = if isNotOverlapping world input then
                             Just $ world { 
-                            player = updateCoords (player world) input,
-                            moves = (moves world) + 1
+                            player = updateCoords (player world) input--,
+                            --moves = (moves world) + 1
                             }
                         else
                             Nothing
