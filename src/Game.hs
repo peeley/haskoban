@@ -1,7 +1,7 @@
 module Game where
 
 type Coords = (Int, Int)
-data Input = MoveUp | MoveDown | MoveLeft | MoveRight deriving Show
+data Input = MoveUp | MoveDown | MoveLeft | MoveRight | Restart deriving Show
 data World = World {
                 width :: Int,
                 height :: Int,

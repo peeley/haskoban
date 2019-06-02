@@ -20,9 +20,9 @@ getLevelDirectory = do
 
 parseArgs :: [String] -> IO ()
 parseArgs [] = do
-    levelFileName <- getLevelDirectory >>= pickRandomLevel 
-    world <- loadWorld levelFileName
-    gameLoop world
+    levelFile <- getLevelDirectory >>= pickRandomLevel 
+    state <- loadState levelFile
+    gameLoop state
 parseArgs ("-l" : levelName : _) = playLevel levelName
 parseArgs ("--level" : levelName : _) = playLevel levelName
 parseArgs _ = helpMessage
@@ -31,8 +31,8 @@ playLevel :: FilePath -> IO ()
 playLevel levelName = do
     levelFolder <- getLevelDirectory
     let levelFile = levelFolder ++ levelName
-    world <- loadWorld levelFile
-    gameLoop world
+    state <- loadState levelFile
+    gameLoop state
 
 helpMessage :: IO ()
 helpMessage = do

@@ -10,8 +10,9 @@ import System.Random
 import Game
 
 -- Main game loop - updates game until 'finished' condition is met.
-gameLoop :: World -> IO ()
-gameLoop world =
+gameLoop :: GameState -> IO ()
+gameLoop state =
+    let world = current state in
     if isFinished world then do
         clearScreen
         setCursorPosition 0 0
@@ -23,18 +24,21 @@ gameLoop world =
         clearScreen
         setCursorPosition 0 0
         setTermColor Yellow
-        -- putStrLn $ "[" ++ name world ++ "]"
+        putStrLn $ "[" ++ name state ++ "]"
         setTermColor Blue
         putStrLn $ "Slots: " ++ (show . length . holes) world
         putStrLn $ "Crates: " ++ (show . length . blocks) world
-        --putStrLn $ "Moves: " ++ (show . moves) world ++ "\n"
+        putStrLn $ "Retries: " ++ (show . retries) state ++ "\n"
         setTermColor White
         putStrLn $ showWorld world
         userInput <- getInput 
-        let newWorld = updateWorld userInput world
-        case newWorld of
-            Just w -> gameLoop w
-            otherwise -> gameLoop world
+        case userInput of
+            Restart -> gameLoop $ state { current = blank state,
+                                          retries = retries state + 1}
+            otherwise -> let newWorld = updateWorld userInput world in
+                            case newWorld of
+                                Just w -> gameLoop $ state { current = w }
+                                otherwise -> gameLoop state
 
 setTermColor :: Color -> IO ()
 setTermColor color = do
@@ -51,14 +55,23 @@ getInput = do
         'a' -> return MoveLeft
         's' -> return MoveDown
         'd' -> return MoveRight
+        'r' -> return Restart
         otherwise -> getInput
+
+loadState :: FilePath -> IO GameState
+loadState fileName = do
+    world <- loadWorld fileName
+    let fileDisplayName = last $ splitOn "/" fileName
+    return $ GameState { current = world,
+                         blank = world,
+                         retries = 0,
+                         name = fileDisplayName }
 
 -- Loads file at filename into World value
 loadWorld :: FilePath -> IO World
 loadWorld fileName = do
     fileHandle <- openFile fileName ReadMode
     fileContents <- hGetContents fileHandle
-    let fileDisplayName = last $ splitOn "/" fileName
     let (width:height:level) = lines fileContents
     let defaultWorld = World (read width) (read height) [] [] [] (-1,-1)
     return $ loadRows defaultWorld 0 level
